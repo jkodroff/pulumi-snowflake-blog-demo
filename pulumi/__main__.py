@@ -6,7 +6,12 @@ import pulumi_snowflake as snowflake
 
 import json
 
-bucket = aws.s3.Bucket("pulumi-snowflake-blog-demo")
+bucket = aws.s3.Bucket(
+    "pulumi-snowflake-blog-demo",
+    # This will allow the bucket to be deleted even if there are objects in it.
+    # This option be used very carefully in a production scenario:
+    force_destroy=True, 
+)
 
 ROLE_NAME = "snowflake-storage-integration"
 
@@ -21,17 +26,17 @@ storage_integration = snowflake.StorageIntegration(
     storage_allowed_locations=["*"]
 )
 
-snowflake_assume_role_policy = pulumi.Output.all(storage_integration.storage_aws_iam_user_arn, storage_integration.storage_aws_external_id).apply(lambda args: json.dumps({
+snowflake_assume_role_policy = pulumi.Output.json_dumps({
     "Version": "2012-10-17",
     "Statement": [{
         "Effect": "Allow",
-        "Principal": {"AWS": args[0]},
+        "Principal": {"AWS": storage_integration.storage_aws_iam_user_arn},
         "Action": "sts:AssumeRole",
         "Condition": {
-            "StringEquals": {"sts:ExternalId": args[1]}
+            "StringEquals": {"sts:ExternalId": storage_integration.storage_aws_external_id}
         }
     }]
-}))
+})
 
 snowflake_role = aws.iam.Role(
     "snowflake-integration-role",
@@ -76,6 +81,7 @@ aws.iam.RolePolicyAttachment(
 
 database = snowflake.Database(
     "pulumi-snowflake-demo",
+    name="pulumi-snowflake-demo",
 )
 
 schema = snowflake.Schema(
@@ -141,12 +147,9 @@ PATTERN=\"jaffle-shop-customers/.*.csv\"
 """, database.name, schema.name, table.name, stage.name)
 
 
-pulumi.export("copy_statement", copy_statment)
-
 pipe = snowflake.Pipe(
     "pipe",
     auto_ingest=True,
-    comment="My pipe's comment",
     copy_statement=copy_statment,
     database=database.name,
     schema=schema.name

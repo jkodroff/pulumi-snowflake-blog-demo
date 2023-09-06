@@ -5,5 +5,5 @@ Temporary home for a Pulumi example w/Snowflake
 To upload the sample data:
 
 ```bash
-aws s3 sync ../data s3://$(pulumi stack output bucketName)
+cd pulumi & aws s3 sync ../data s3://$(pulumi stack output bucketName)
 ```
