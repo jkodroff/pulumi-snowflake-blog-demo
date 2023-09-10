@@ -1,4 +1,4 @@
-# pulumi-snowflake-blog-demo
+# blog-snowflake-elt-python
 
 This repository contains the finished code for the Medium post [Lightning-fast ELT for Python Devs with AWS, Snowpipe, and Pulumi](https://medium.com/p/4eaf056dd097) which appears in Snowflake's blog.
 
